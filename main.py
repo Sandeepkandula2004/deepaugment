@@ -3,12 +3,24 @@ from tensorflow.keras.models import load_model
 from keras.preprocessing.image import load_img, img_to_array
 import numpy as np
 import os
-
+import requests
 # Initialize Flask app
 app = Flask(__name__)
 
-# Load the trained model
-model = load_model('model.h5')
+def download_model():
+    model_url = "https://drive.google.com/uc?export=download&id=1i2IpcvOcCfSU73Gx1mOfp1HtY1JjO2r2"
+    model_path = "model.h5"
+    if not os.path.exists(model_path):
+        print("🔄 Downloading model...")
+        response = requests.get(model_url)
+        with open(model_path, 'wb') as f:
+            f.write(response.content)
+        print("✅ Model downloaded.")
+    return model_path
+
+# Download and load model
+model_path = download_model()
+model = load_model(model_path)
 
 # Class labels
 class_labels = ['pituitary', 'glioma', 'notumor', 'meningioma']
