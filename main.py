@@ -3,12 +3,13 @@ from tensorflow.keras.models import load_model
 from keras.preprocessing.image import load_img, img_to_array
 import numpy as np
 import os
+import requests
 
 # Initialize Flask app
 app = Flask(__name__)
 
 
-model = load_model("model.h5")
+#model = load_model("model.h5")
 
 # Class labels
 class_labels = ['pituitary', 'glioma', 'notumor', 'meningioma']
@@ -21,20 +22,22 @@ if not os.path.exists(UPLOAD_FOLDER):
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Helper function to predict tumor type
+import requests
+
+# Replace this function in your Flask app
 def predict_tumor(image_path):
-    IMAGE_SIZE = 128
-    img = load_img(image_path, target_size=(IMAGE_SIZE, IMAGE_SIZE))
-    img_array = img_to_array(img) / 255.0  # Normalize pixel values
-    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
-
-    predictions = model.predict(img_array)
-    predicted_class_index = np.argmax(predictions, axis=1)[0]
-    confidence_score = np.max(predictions, axis=1)[0]
-
-    if class_labels[predicted_class_index] == 'notumor':
-        return "No Tumor", confidence_score
+    api_url = "https://Sandeep2004-myspace.hf.space/predict"
+    with open(image_path, "rb") as f:
+        response = requests.post(api_url, files={"file": f})
+    
+    if response.status_code == 200:
+        data = response.json()
+        label = data["prediction"]
+        confidence = data["confidence"]
+        return (label if label == "No Tumor" else f"Tumor: {label}"), confidence
     else:
-        return f"Tumor: {class_labels[predicted_class_index]}", confidence_score
+        return "Error contacting prediction server", 0.0
+
 
 # Route for the main page (index.html)
 @app.route('/', methods=['GET', 'POST'])
@@ -62,3 +65,5 @@ def get_uploaded_file(filename):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
